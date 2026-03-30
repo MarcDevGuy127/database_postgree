@@ -28,6 +28,14 @@ ORDER BY usuario.nome ASC;
 
 SELECT * FROM view_Servicos;
 --3. Mostrar o nome das peças e a quantidade em estoque delas
+CREATE VIEW view_Estoque AS
+SELECT peca.nome, estoque.qtde
+FROM estoque
+INNER JOIN peca
+ON estoque.id_peca = peca.id_peca
+ORDER BY peca.nome ASC;
+
+SELECT * FROM view_Estoque;
 --4. Mostrar o nome dos lojistas e da loja na qual ele trabalha
 --5. Mostrar a receita bruta faturada na loja de peças
 --6. Mostrar a diferença o valor total pago em um serviço, e do valor total qual é o valor da peça, e qual é o valor do serviço
