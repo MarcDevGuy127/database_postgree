@@ -88,3 +88,9 @@ ON metodo_pagamento.codigo = reserva.status_codigo
 ORDER BY id_pagamento ASC; --GROUP BY id_pagamento, id_imovel, metodo_pagamento.rotulo, reserva.status_codigo;
 
 SELECT * FROM view_Payment;
+
+--Exercicio 6
+--Usando a view do exercício 3, encontre as reservas
+--mais de 3 dias (considerando checkin e checkout)
+SELECT * FROM view_Reservation
+WHERE total_days > 3;
