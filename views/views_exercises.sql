@@ -1,5 +1,3 @@
-
-
 --Exercicio 1
 --Crie uma view para retornar o id do usuário, o seu 
 --nome, cpf (no caso de hospede) ou cnpj (no caso de 
@@ -66,18 +64,28 @@ SELECT * FROM view_Reservation;
 --Exercicio 4
 --Crie uma view para apresentar o id_reserva, data do
 --checkin e o status da reserva
+DROP VIEW view_SimpleReservationInfo;
+
+--CREATE VIEW view_SimpleReservationInfo AS
+--SELECT id_reserva, checkin, status_codigo
+--FROM reserva
+--INNER JOIN status_pagamento
+
 CREATE VIEW view_SimpleReservationInfo AS
-SELECT id_reserva, checkin, status_codigo
-FROM reserva;
+SELECT id_reserva, checkin, status_codigo, metodo_pagamento.codigo, metodo_pagamento.rotulo
+FROM reserva
+INNER JOIN metodo_pagamento
+ON metodo_pagamento.codigo = reserva.status_codigo
+INNER JOIN status_pagamento
+ON reserva.status_codigo = status_pagamento.codigo;
 
 SELECT * FROM view_SimpleReservationInfo;
-
-drop view view_Payment;
 
 --Exercicio 5
 --Crie uma view para apresentar
 --o id_pagamento, imovel da reserva, valor_total da
 --reserva, método do pagamento e status do pagamento
+drop view view_Payment;
 CREATE VIEW view_Payment AS
 SELECT id_pagamento, id_imovel, pagamento.valor_total, metodo_pagamento.rotulo, reserva.status_codigo
 FROM reserva
@@ -94,3 +102,9 @@ SELECT * FROM view_Payment;
 --mais de 3 dias (considerando checkin e checkout)
 SELECT * FROM view_Reservation
 WHERE total_days > 3;
+
+--Exercicio 7
+--Usando a view do exercício 4, encontre todos os
+--pagamentos feitos utilizado pix
+SELECT * FROM view_SimpleReservationInfo
+WHERE status_codigo = 1;
