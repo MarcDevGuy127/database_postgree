@@ -71,3 +71,20 @@ SELECT id_reserva, checkin, status_codigo
 FROM reserva;
 
 SELECT * FROM view_SimpleReservationInfo;
+
+drop view view_Payment;
+
+--Exercicio 5
+--Crie uma view para apresentar
+--o id_pagamento, imovel da reserva, valor_total da
+--reserva, método do pagamento e status do pagamento
+CREATE VIEW view_Payment AS
+SELECT id_pagamento, id_imovel, pagamento.valor_total, metodo_pagamento.rotulo, reserva.status_codigo
+FROM reserva
+INNER JOIN pagamento
+ON reserva.id_reserva = pagamento.id_pagamento
+INNER JOIN metodo_pagamento
+ON metodo_pagamento.codigo = reserva.status_codigo
+ORDER BY id_pagamento ASC; --GROUP BY id_pagamento, id_imovel, metodo_pagamento.rotulo, reserva.status_codigo;
+
+SELECT * FROM view_Payment;
