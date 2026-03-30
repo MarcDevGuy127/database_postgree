@@ -38,6 +38,16 @@ ORDER BY peca.nome ASC;
 
 SELECT * FROM view_Estoque;
 --4. Mostrar o nome dos lojistas e da loja na qual ele trabalha
+DROP VIEW view_Lojistas
+CREATE VIEW view_Lojistas AS
+SELECT lojista.nome AS employee, 
+loja.nome AS store_name
+FROM lojista
+INNER JOIN loja
+ON lojista.id_lojista = loja.id_loja
+ORDER BY lojista.nome ASC;
+
+SELECT * FROM view_Lojistas;
 --5. Mostrar a receita bruta faturada na loja de peças
 --6. Mostrar a diferença o valor total pago em um serviço, e do valor total qual é o valor da peça, e qual é o valor do serviço
 --7. Mostrar as lojas próximas do usuario (estudar como funciona os Graus Decimais e o que significa uma “loja próxima”)
