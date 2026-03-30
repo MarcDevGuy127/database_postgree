@@ -62,3 +62,12 @@ WHERE status_codigo = 2 --status_codigo = 2
 GROUP BY reserva.id_reserva, hospede.cpf;
 
 SELECT * FROM view_Reservation;
+
+--Exercicio 4
+--Crie uma view para apresentar o id_reserva, data do
+--checkin e o status da reserva
+CREATE VIEW view_SimpleReservationInfo AS
+SELECT id_reserva, checkin, status_codigo
+FROM reserva;
+
+SELECT * FROM view_SimpleReservationInfo;
