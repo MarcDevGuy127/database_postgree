@@ -48,7 +48,22 @@ ON lojista.id_lojista = loja.id_loja
 ORDER BY lojista.nome ASC;
 
 SELECT * FROM view_Lojistas;
+
 --5. Mostrar a receita bruta faturada na loja de peças
+DROP VIEW view_Fatura
+
+CREATE VIEW view_Fatura AS
+SELECT loja.nome AS store_name,
+SUM(servico.valor_servico) AS balance
+FROM mecanico
+INNER JOIN servico
+ON mecanico.id_mecanico = servico.id_servico
+INNER JOIN loja
+ON servico.id_servico = loja.id_loja
+GROUP BY loja.nome, servico.descricao;
+
+SELECT * FROM view_Fatura;
+
 --6. Mostrar a diferença o valor total pago em um serviço, e do valor total qual é o valor da peça, e qual é o valor do serviço
 --7. Mostrar as lojas próximas do usuario (estudar como funciona os Graus Decimais e o que significa uma “loja próxima”)
 --8. Mostrar todos os serviços realizados no último mês
