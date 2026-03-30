@@ -30,11 +30,16 @@ SELECT * FROM view_Servicos;
 --3. Mostrar o nome das peças e a quantidade em estoque delas
 DROP VIEW view_Estoque
 CREATE VIEW view_Estoque AS
-SELECT peca.nome, estoque.qtde
+SELECT loja.nome, peca.nome, estoque.qtde
 FROM estoque
 INNER JOIN peca
 ON estoque.id_peca = peca.id_peca
+INNER JOIN loja
+ON estoque.id_loja = loja.id_loja 
 ORDER BY peca.nome ASC;
+
+select *
+from estoque;
 
 SELECT * FROM view_Estoque;
 --4. Mostrar o nome dos lojistas e da loja na qual ele trabalha
