@@ -107,4 +107,4 @@ WHERE total_days > 3;
 --Usando a view do exercício 4, encontre todos os
 --pagamentos feitos utilizado pix
 SELECT * FROM view_SimpleReservationInfo
-WHERE status_codigo = 1;
+WHERE codigo = 1;
