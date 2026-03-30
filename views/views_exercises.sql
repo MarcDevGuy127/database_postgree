@@ -26,10 +26,39 @@ SELECT * FROM imovel;
 drop view view_Houses;
 
 CREATE VIEW view_Houses AS
-SELECT id_imovel, titulo, tipo_imovel.rotulo, AVG(valor_diaria) 
+SELECT id_imovel, titulo, tipo_imovel.rotulo, AVG(valor_diaria) AS day_value
 FROM imovel
 INNER JOIN tipo_imovel
 ON imovel.tipo_codigo = tipo_imovel.codigo
 GROUP BY imovel.id_imovel, imovel.titulo, tipo_imovel.rotulo;
 
 SELECT * FROM view_Houses;
+
+--Exercicio 3
+--Crie uma view para mostrar o nome do imóvel
+--reservado, a data de checkin e checkout, a quantidade
+--de dias reservados, o valor total da reserva, e o nome
+--do hospede que reservou
+SELECT id_reserva, COUNT(status_codigo) FROM reserva WHERE status_codigo = 2
+GROUP BY id_reserva;
+
+SELECT * FROM reserva;
+SELECT * FROM hospede;
+SELECT * FROM imovel;
+SELECT * FROM status_pagamento;
+
+DROP VIEW view_Reservation;
+
+CREATE VIEW view_Reservation AS
+SELECT checkin, checkout, (checkout - checkin) AS total_days, valor_total, hospede.cpf
+FROM reserva
+INNER JOIN hospede
+ON reserva.id_reserva = hospede.id_hospede
+INNER JOIN imovel
+ON hospede.id_hospede = imovel.id_imovel
+INNER JOIN status_pagamento
+ON reserva.status_codigo = status_pagamento.codigo  --reserva.status_codigo
+WHERE status_codigo = 2 --status_codigo = 2
+GROUP BY reserva.id_reserva, hospede.cpf;
+
+SELECT * FROM view_Reservation;
