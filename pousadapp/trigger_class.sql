@@ -27,3 +27,15 @@ UPDATE reserva set status_codigo = 4 WHERE id_hospede = 18;
 
 SELECT * FROM historico_reserva WHERE 
 observacao = 'Mudança de estado da reserva';
+
+--Create historico_imovel table
+DROP TABLE IF EXISTS historico_imovel CASCADE;
+CREATE TABLE historico_imovel (
+  id_historico BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  id_imovel BIGINT,
+  data_hora TIMESTAMP DEFAULT NOW(),
+  valor_diaria SMALLINT,
+  observacao TEXT,
+  FOREIGN KEY (id_imovel)
+  REFERENCES imovel(id_imovel) 
+);
