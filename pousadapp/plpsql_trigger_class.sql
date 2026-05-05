@@ -75,3 +75,23 @@ FOR EACH ROW
 EXECUTE FUNCTION valida_diaria_fnc();
 
 UPDATE imovel SET valor_diaria = -50 WHERE id_imovel = 1;
+
+CREATE OR REPLACE FUNCTION avisar_mudanca_nome_fnc()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.titulo <> OLD.titulo THEN
+    RAISE NOTICE 'O titulo do imovel % mudou para %',
+      OLD.titulo, NEW.titulo;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS 
+avisar_mudanca_titulo_trg ON imovel;
+CREATE TRIGGER avisar_mudanca_titulo_trg
+BEFORE UPDATE ON imovel
+FOR EACH ROW
+EXECUTE FUNCTION avisar_mudanca_nome_fnc();
+
+UPDATE imovel SET titulo = 'Pousada Serra Verde - Suíte Presidencial' WHERE id_imovel = 1;
