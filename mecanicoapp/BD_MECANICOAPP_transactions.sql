@@ -20,11 +20,52 @@ VALUES(9, 6, 5, 9, 'Aplicação de Insulfilm G20', NOW(), 170.50);
 
 COMMIT;
 
-SELECT * FROM mecanico;
 SELECT * FROM peca;
 SELECT * FROM estoque;
 SELECT * FROM usuario
 WHERE id_usuario = 6;
 SELECT * FROM servico;
 
+-- Exercise 2
+BEGIN;
+
+CREATE OR REPLACE FUNCTION alertAddPecaEstoque()
+RETURNS TRIGGER AS $$
+BEGIN
+
+	RAISE NOTICE 'A peça do ID % foi adicionada no estoque da loja %.',
+     NEW.id_peca, NEW.id_loja;
+ 
+	RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+SAVEPOINT sp_alert_add_peca_estoque;
+
+CREATE or REPLACE TRIGGER 
+trgAlertAddPecaEstoque
+AFTER INSERT
+ON estoque
+FOR EACH ROW
+EXECUTE FUNCTION alertAddPecaEstoque();
+
+SAVEPOINT sp_trg_add_peca_estoque;
+
+INSERT INTO peca(id_peca, nome, marca, cod_referencia, descricao)
+VALUES(10, 'Farol Xenon', 'Grundhay Inc', 'GINK-9010', 'Farol xenôn esportivo');
+
+SAVEPOINT sp_insertion_peca;
+
+INSERT INTO estoque(id_estoque, id_loja, id_peca, preco, qtde)
+VALUES(16, 4, 10, 1000, 150);
+
+SAVEPOINT sp_insertion_estoque;
+
+select * from estoque;
+
+SAVEPOINT sp_insertion_query;
+
+COMMIT;
 ROLLBACK;
+
+-- Exercise 3
