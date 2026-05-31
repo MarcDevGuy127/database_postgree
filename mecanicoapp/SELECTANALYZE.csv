@@ -1,0 +1,5 @@
+"QUERY PLAN"
+"Seq Scan on usuario  (cost=0.00..2333.05 rows=100005 width=73) (actual time=0.064..10.940 rows=100005.00 loops=1)"
+"  Buffers: shared hit=1333"
+"Planning Time: 0.197 ms"
+"Execution Time: 17.816 ms"
