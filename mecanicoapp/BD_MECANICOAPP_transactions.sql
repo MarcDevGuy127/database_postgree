@@ -6,7 +6,7 @@ INSERT INTO mecanico(id_mecanico, nome, telefone, especialidade, endereco, latit
 VALUES(5, 'Marcelo Silva', '(41) 99777-1005', 'Customização Automotiva', 'Rua Pedro Alvarez Cabral, 1500 - Bairro Alto, Curitiba/PR', '-25.4300', '-49.248300');
 
 INSERT INTO peca(id_peca, nome, marca, cod_referencia, descricao)
-VALUES(9, 'Insulfilm G20', 'Grundhay Inc', 'GINK-9009', 'Película de proteção solar que filtra 20% da iluminação externa');
+VALUES(9, 'Insulfilm G20', 'Grundhay Inc', 'GINK-9009', 'Pelicula de protecao solar que filtra 20% da iluminacao externa');
 
 INSERT INTO estoque(id_estoque, id_loja, id_peca, preco, qtde)
 VALUES(15, 3, 9, 210, 8);
@@ -16,7 +16,7 @@ SET nome = 'Pedro Macedo'
 WHERE id_usuario = 6;
 
 INSERT INTO servico(id_servico, id_usuario, id_mecanico, id_peca, descricao, data_servico, valor_servico)
-VALUES(9, 6, 5, 9, 'Aplicação de Insulfilm G20', NOW(), 170.50);
+VALUES(9, 6, 5, 9, 'Aplicacao de Insulfilm G20', NOW(), 170.50);
 
 COMMIT;
 
@@ -52,7 +52,7 @@ EXECUTE FUNCTION alertAddPecaEstoque();
 SAVEPOINT sp_trg_add_peca_estoque;
 
 INSERT INTO peca(id_peca, nome, marca, cod_referencia, descricao)
-VALUES(10, 'Farol Xenon', 'Grundhay Inc', 'GINK-9010', 'Farol xenôn esportivo');
+VALUES(10, 'Farol Xenon', 'Grundhay Inc', 'GINK-9010', 'Farol xenon esportivo');
 
 SAVEPOINT sp_insertion_peca;
 
@@ -69,3 +69,21 @@ COMMIT;
 ROLLBACK;
 
 -- Exercise 3
+-- É temporada de verão, muitos motoristas estão garantindo que os seus veículos durem durante as suas viagens.
+-- Com isso, os serviços sofreram aumento de 30% nos preços cobrados devido a demanda.
+BEGIN;
+
+SELECT * FROM servico;
+
+SAVEPOINT sp_servicos_sem_demanda;
+
+UPDATE servico
+SET valor_servico = valor_servico + valor_servico * 0.30;
+
+SELECT * FROM servico;
+
+SAVEPOINT sp_servicos_com_demanda;
+
+-- Todos os serviços aumentaram 30% a mais do que o preço comum
+
+ROLLBACK;
