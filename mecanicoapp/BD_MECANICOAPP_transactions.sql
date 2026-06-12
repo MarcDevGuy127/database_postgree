@@ -1,3 +1,4 @@
+
 -- Exercise 1 - Transactions
 -- Add new user, transform into an entity and associate with the main table
 BEGIN;
