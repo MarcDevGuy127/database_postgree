@@ -1,0 +1,778 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict grjmoVgEVCsymeBucKgjdqAfYTYtHtrxJefhVgkCCifaMARcuOSdSb7PRg6agje
+
+-- Dumped from database version 18.3
+-- Dumped by pg_dump version 18.3
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: alertaddpecaestoque(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.alertaddpecaestoque() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+ IF NEW.id_peca <> OLD.id_peca THEN
+   RAISE NOTICE 'A peça do ID % foi adicionada no estoque da loja %.',
+     NEW.id_peca, NEW.id_loja;
+ END IF;
+ RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.alertaddpecaestoque() OWNER TO postgres;
+
+--
+-- Name: alertchangepecaestoque(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.alertchangepecaestoque() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+ IF NEW.nome <> OLD.nome THEN
+   RAISE NOTICE 'A peça do ID % teve seu nome alterado de % para %.',
+     OLD.id_peca, OLD.nome, NEW.nome;
+ 
+ ELSIF NEW.marca <> OLD.marca THEN
+   RAISE NOTICE 'A peça do ID % teve sua marca alterada de % para %.',
+     OLD.id_peca, OLD.marca, NEW.marca;
+ 
+ ELSIF NEW.cod_referencia <> OLD.cod_referencia THEN
+   RAISE NOTICE 'A peça do ID % teve seu código de referencia alterado de % para %.',
+     OLD.id_peca, OLD.cod_referencia, NEW.cod_referencia;
+	 
+ ELSIF NEW.descricao <> OLD.descricao THEN
+   RAISE NOTICE 'A peça do ID % teve sua descricao alterada.',
+     OLD.id_peca;
+ END IF;
+ 
+ RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.alertchangepecaestoque() OWNER TO postgres;
+
+--
+-- Name: alertremovepecaestoque(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.alertremovepecaestoque() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+ RAISE NOTICE 'A peça do ID % foi removida do estoque %.',
+ OLD.id_peca, OLD.id_estoque;
+ RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION public.alertremovepecaestoque() OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: estoque; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.estoque (
+    id_estoque integer NOT NULL,
+    id_loja integer NOT NULL,
+    id_peca integer NOT NULL,
+    preco numeric NOT NULL,
+    qtde integer NOT NULL
+);
+
+
+ALTER TABLE public.estoque OWNER TO postgres;
+
+--
+-- Name: loja; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.loja (
+    id_loja integer NOT NULL,
+    id_lojista integer NOT NULL,
+    nome character varying(255) NOT NULL,
+    endereco character varying(255) NOT NULL,
+    latitude numeric NOT NULL,
+    longitude numeric NOT NULL
+);
+
+
+ALTER TABLE public.loja OWNER TO postgres;
+
+--
+-- Name: lojista; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.lojista (
+    id_lojista integer NOT NULL,
+    nome character varying(255) NOT NULL,
+    email character varying(255) NOT NULL,
+    telefone character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.lojista OWNER TO postgres;
+
+--
+-- Name: mecanico; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.mecanico (
+    id_mecanico integer NOT NULL,
+    nome character varying(255) NOT NULL,
+    telefone character varying(255) NOT NULL,
+    especialidade character varying(255) NOT NULL,
+    endereco character varying(255) NOT NULL,
+    latitude numeric NOT NULL,
+    longitude numeric NOT NULL
+);
+
+
+ALTER TABLE public.mecanico OWNER TO postgres;
+
+--
+-- Name: peca; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.peca (
+    id_peca integer NOT NULL,
+    nome character varying(255) NOT NULL,
+    marca character varying(255) NOT NULL,
+    cod_referencia character varying(255) NOT NULL,
+    descricao text NOT NULL
+);
+
+
+ALTER TABLE public.peca OWNER TO postgres;
+
+--
+-- Name: pedido; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.pedido (
+    id_pedido integer NOT NULL,
+    id_usuario integer NOT NULL,
+    data timestamp without time zone NOT NULL,
+    status character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.pedido OWNER TO postgres;
+
+--
+-- Name: servico; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.servico (
+    id_servico integer NOT NULL,
+    id_usuario integer NOT NULL,
+    id_mecanico integer NOT NULL,
+    id_peca integer NOT NULL,
+    descricao text NOT NULL,
+    data_servico timestamp without time zone NOT NULL,
+    valor_servico numeric NOT NULL
+);
+
+
+ALTER TABLE public.servico OWNER TO postgres;
+
+--
+-- Name: usuario; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.usuario (
+    id_usuario integer NOT NULL,
+    nome character varying(60) NOT NULL,
+    email character varying(50) NOT NULL,
+    senha character varying(16) NOT NULL,
+    telefone character varying(255) NOT NULL,
+    latitude numeric NOT NULL,
+    longitude numeric NOT NULL
+);
+
+
+ALTER TABLE public.usuario OWNER TO postgres;
+
+--
+-- Name: view_diferenca; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.view_diferenca AS
+ SELECT s.id_servico,
+    abs((s.valor_servico - e.preco)) AS difference,
+    e.preco AS item_price,
+    s.valor_servico AS service_value
+   FROM ((public.servico s
+     JOIN public.peca p ON ((p.id_peca = s.id_peca)))
+     JOIN public.estoque e ON ((e.id_peca = s.id_peca)))
+  ORDER BY s.id_servico;
+
+
+ALTER VIEW public.view_diferenca OWNER TO postgres;
+
+--
+-- Name: view_estoque; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.view_estoque AS
+ SELECT loja.nome AS store,
+    peca.nome AS item,
+    estoque.qtde
+   FROM ((public.estoque
+     JOIN public.peca ON ((estoque.id_peca = peca.id_peca)))
+     JOIN public.loja ON ((estoque.id_loja = loja.id_loja)))
+  ORDER BY peca.nome;
+
+
+ALTER VIEW public.view_estoque OWNER TO postgres;
+
+--
+-- Name: view_fatura; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.view_fatura AS
+ SELECT loja.nome AS store_name,
+    sum(servico.valor_servico) AS balance
+   FROM ((public.mecanico
+     JOIN public.servico ON ((mecanico.id_mecanico = servico.id_servico)))
+     JOIN public.loja ON ((servico.id_servico = loja.id_loja)))
+  GROUP BY loja.nome, servico.descricao;
+
+
+ALTER VIEW public.view_fatura OWNER TO postgres;
+
+--
+-- Name: view_lojistas; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.view_lojistas AS
+ SELECT lojista.nome AS employee,
+    loja.nome AS store_name
+   FROM (public.lojista
+     JOIN public.loja ON ((lojista.id_lojista = loja.id_loja)))
+  ORDER BY lojista.nome;
+
+
+ALTER VIEW public.view_lojistas OWNER TO postgres;
+
+--
+-- Name: view_mecanicos; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.view_mecanicos AS
+ SELECT nome,
+    especialidade
+   FROM public.mecanico
+  ORDER BY especialidade;
+
+
+ALTER VIEW public.view_mecanicos OWNER TO postgres;
+
+--
+-- Name: view_servicos; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.view_servicos AS
+ SELECT usuario.nome AS username,
+    mecanico.nome AS mechanic,
+    servico.descricao AS service,
+    peca.nome AS piece,
+    servico.valor_servico AS service_value,
+    loja.nome AS auto_repair
+   FROM ((((public.mecanico
+     JOIN public.servico ON ((mecanico.id_mecanico = servico.id_usuario)))
+     JOIN public.usuario ON ((servico.id_usuario = usuario.id_usuario)))
+     JOIN public.peca ON ((usuario.id_usuario = peca.id_peca)))
+     JOIN public.loja ON ((peca.id_peca = loja.id_loja)))
+  ORDER BY usuario.nome;
+
+
+ALTER VIEW public.view_servicos OWNER TO postgres;
+
+--
+-- Name: view_servicos_realizados; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.view_servicos_realizados AS
+ SELECT s.id_servico,
+    u.nome AS usuario,
+    m.nome AS mecanico,
+    m.especialidade,
+    p.nome AS peca,
+    s.descricao,
+    s.data_servico,
+    s.valor_servico
+   FROM (((public.servico s
+     JOIN public.usuario u ON ((u.id_usuario = s.id_usuario)))
+     JOIN public.mecanico m ON ((m.id_mecanico = s.id_mecanico)))
+     JOIN public.peca p ON ((p.id_peca = s.id_peca)));
+
+
+ALTER VIEW public.view_servicos_realizados OWNER TO postgres;
+
+--
+-- Name: vw_lojas_proximas; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.vw_lojas_proximas AS
+ SELECT l.id_loja,
+    u.id_usuario,
+    (((6371 * 2))::double precision * asin(sqrt((power(sin((radians(((l.latitude - u.latitude))::double precision) / (2)::double precision)), (2)::double precision) + ((cos(radians((u.latitude)::double precision)) * cos(radians((l.latitude)::double precision))) * power(sin((radians(((l.longitude - u.longitude))::double precision) / (2)::double precision)), (2)::double precision)))))) AS distancia_km
+   FROM (public.loja l
+     CROSS JOIN public.usuario u)
+  ORDER BY (((6371 * 2))::double precision * asin(sqrt((power(sin((radians(((l.latitude - u.latitude))::double precision) / (2)::double precision)), (2)::double precision) + ((cos(radians((u.latitude)::double precision)) * cos(radians((l.latitude)::double precision))) * power(sin((radians(((l.longitude - u.longitude))::double precision) / (2)::double precision)), (2)::double precision))))));
+
+
+ALTER VIEW public.vw_lojas_proximas OWNER TO postgres;
+
+--
+-- Data for Name: estoque; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.estoque (id_estoque, id_loja, id_peca, preco, qtde) FROM stdin;
+1	1	1	149.90	20
+2	1	2	35.50	50
+3	1	4	420.00	10
+4	2	3	289.90	15
+5	2	5	119.90	18
+6	2	6	79.90	40
+7	3	1	155.00	12
+8	3	7	199.90	16
+9	3	8	45.00	35
+10	4	2	37.00	28
+11	4	4	430.00	8
+12	4	6	82.50	22
+13	4	8	90	70
+14	4	8	180	105
+\.
+
+
+--
+-- Data for Name: loja; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.loja (id_loja, id_lojista, nome, endereco, latitude, longitude) FROM stdin;
+1	1	Auto Pecas Curitiba Centro	Rua XV de Novembro, 500 - Centro, Curitiba/PR	-25.429500	-49.271800
+2	1	Auto Pecas Curitiba Sul	Av. Republica Argentina, 1200 - Portao, Curitiba/PR	-25.476200	-49.292100
+3	2	Pecas Express	Rua Chile, 850 - Reboucas, Curitiba/PR	-25.447800	-49.265400
+4	3	Oficina e Pecas Boa Vista	Rua Holanda, 300 - Boa Vista, Curitiba/PR	-25.395100	-49.246700
+\.
+
+
+--
+-- Data for Name: lojista; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.lojista (id_lojista, nome, email, telefone) FROM stdin;
+1	Carlos Mendes	carlos.mendes@email.com	(41) 99911-1001
+2	Fernanda Alves	fernanda.alves@email.com	(41) 99911-1002
+3	Ricardo Souza	ricardo.souza@email.com	(41) 99911-1003
+\.
+
+
+--
+-- Data for Name: mecanico; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.mecanico (id_mecanico, nome, telefone, especialidade, endereco, latitude, longitude) FROM stdin;
+1	Andre Oliveira	(41) 99777-1001	Freios	Rua das Oficinas, 101 - Centro, \nCuritiba/PR	-25.430000	-49.272000
+2	Paulo Henrique	(41) 99777-1002	Suspensao	Av. Sete de Setembro, 2020 - \nReboucas, Curitiba/PR	-25.440100	-49.268000
+3	Juliana Martins	(41) 99777-1003	Motor	Rua Itupava, 1500 - Alto da XV, \nCuritiba/PR	-25.418200	-49.255900
+4	Roberto Lima	(41) 99777-1004	Eletrica Automotiva	Rua Fernando de Noronha, \n890 - Boa Vista, Curitiba/PR	-25.397700	-49.248300
+\.
+
+
+--
+-- Data for Name: peca; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.peca (id_peca, nome, marca, cod_referencia, descricao) FROM stdin;
+1	Pastilha de Freio	Bosch	BOS-1001	Pastilha de freio dianteira para veiculos de \npasseio
+2	Filtro de Oleo	Mann	MAN-2002	Filtro de oleo de alta eficiencia
+3	Amortecedor Dianteiro	Cofap	COF-3003	Amortecedor dianteiro lado \nesquerdo
+4	Bateria 60Ah	Moura	MOU-4004	Bateria automotiva 12V 60Ah
+6	Vela de Ignicao	NGK	NGK-6006	Jogo de velas de ignicao
+7	Disco de Freio	TRW	TRW-7007	Disco de freio ventilado
+8	Filtro de Ar	Tecfil	TEC-8008	Filtro de ar do motor
+5	Correia Dentada	Gates	GAT-5005	Correia dentada reforcada e resistente
+\.
+
+
+--
+-- Data for Name: pedido; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.pedido (id_pedido, id_usuario, data, status) FROM stdin;
+1	1	2026-03-10 09:30:00	Pendente
+2	2	2026-03-10 10:15:00	Concluido
+3	3	2026-03-11 14:20:00	Em andamento
+4	1	2026-03-12 16:45:00	Cancelado
+5	4	2026-03-13 11:00:00	Concluido
+6	5	2026-03-14 13:10:00	Pendente
+\.
+
+
+--
+-- Data for Name: servico; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.servico (id_servico, id_usuario, id_mecanico, id_peca, descricao, data_servico, valor_servico) FROM stdin;
+1	1	1	1	Troca de pastilhas de freio dianteiras	2026-03-10 10:00:00	120.00
+2	2	3	2	Troca de filtro de oleo e revisao basica	2026-03-11 09:00:00	80.00
+3	3	2	3	Substituicao de amortecedor dianteiro	2026-03-11 15:30:00	250.00
+4	4	4	4	Troca de bateria automotiva	2026-03-12 11:20:00	90.00
+5	5	3	5	Troca de correia dentada	2026-03-13 14:00:00	300.00
+6	1	4	6	Substituicao de velas de ignicao	2026-03-14 08:45:00	110.00
+7	2	1	7	Troca de disco de freio	2026-03-14 16:10:00	180.00
+8	3	3	8	Troca de filtro de ar	2026-03-15 10:25:00	70.00
+\.
+
+
+--
+-- Data for Name: usuario; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.usuario (id_usuario, nome, email, senha, telefone, latitude, longitude) FROM stdin;
+1	Lucas Pereira	lucas@email.com	12345678	(41) 99888-1001	-25.428400	-49.273300
+2	Mariana Silva	mariana@email.com	12345678	(41) 99888-1002	-25.429000	-49.270000
+3	Joao Santos	joao@email.com	12345678	(41) 99888-1003	-25.430500	-49.275000
+4	Ana Costa	ana@email.com	12345678	(41) 99888-1004	-25.427000	-49.280000
+5	Bruno Lima	bruno@email.com	12345678	(41) 99888-1005	-25.431200	-49.268500
+\.
+
+
+--
+-- Name: estoque estoque_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.estoque
+    ADD CONSTRAINT estoque_pkey PRIMARY KEY (id_estoque);
+
+
+--
+-- Name: loja loja_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.loja
+    ADD CONSTRAINT loja_pkey PRIMARY KEY (id_loja);
+
+
+--
+-- Name: lojista lojista_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lojista
+    ADD CONSTRAINT lojista_pkey PRIMARY KEY (id_lojista);
+
+
+--
+-- Name: mecanico mecanico_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.mecanico
+    ADD CONSTRAINT mecanico_pkey PRIMARY KEY (id_mecanico);
+
+
+--
+-- Name: peca peca_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.peca
+    ADD CONSTRAINT peca_pkey PRIMARY KEY (id_peca);
+
+
+--
+-- Name: pedido pedido_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pedido
+    ADD CONSTRAINT pedido_pkey PRIMARY KEY (id_pedido);
+
+
+--
+-- Name: servico servico_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.servico
+    ADD CONSTRAINT servico_pkey PRIMARY KEY (id_servico);
+
+
+--
+-- Name: usuario usuario_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.usuario
+    ADD CONSTRAINT usuario_pkey PRIMARY KEY (id_usuario);
+
+
+--
+-- Name: estoque trgalertaddpecaestoque; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trgalertaddpecaestoque AFTER INSERT ON public.estoque FOR EACH ROW EXECUTE FUNCTION public.alertaddpecaestoque();
+
+
+--
+-- Name: estoque trgalertchangepecaestoque; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trgalertchangepecaestoque AFTER UPDATE ON public.estoque FOR EACH ROW EXECUTE FUNCTION public.alertchangepecaestoque();
+
+
+--
+-- Name: peca trgalertchangepecaestoque; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trgalertchangepecaestoque AFTER UPDATE ON public.peca FOR EACH ROW EXECUTE FUNCTION public.alertchangepecaestoque();
+
+
+--
+-- Name: estoque trgalertremovepecaestoque; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER trgalertremovepecaestoque AFTER DELETE ON public.estoque FOR EACH ROW EXECUTE FUNCTION public.alertremovepecaestoque();
+
+
+--
+-- Name: estoque estoque_id_loja_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.estoque
+    ADD CONSTRAINT estoque_id_loja_fkey FOREIGN KEY (id_loja) REFERENCES public.loja(id_loja);
+
+
+--
+-- Name: estoque estoque_id_peca_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.estoque
+    ADD CONSTRAINT estoque_id_peca_fkey FOREIGN KEY (id_peca) REFERENCES public.peca(id_peca);
+
+
+--
+-- Name: loja loja_id_lojista_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.loja
+    ADD CONSTRAINT loja_id_lojista_fkey FOREIGN KEY (id_lojista) REFERENCES public.lojista(id_lojista);
+
+
+--
+-- Name: pedido pedido_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pedido
+    ADD CONSTRAINT pedido_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES public.usuario(id_usuario);
+
+
+--
+-- Name: servico servico_id_mecanico_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.servico
+    ADD CONSTRAINT servico_id_mecanico_fkey FOREIGN KEY (id_mecanico) REFERENCES public.mecanico(id_mecanico);
+
+
+--
+-- Name: servico servico_id_peca_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.servico
+    ADD CONSTRAINT servico_id_peca_fkey FOREIGN KEY (id_peca) REFERENCES public.peca(id_peca);
+
+
+--
+-- Name: servico servico_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.servico
+    ADD CONSTRAINT servico_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES public.usuario(id_usuario);
+
+
+--
+-- Name: TABLE estoque; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.estoque TO loja;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.estoque TO estoque;
+
+
+--
+-- Name: TABLE lojista; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.lojista TO loja;
+
+
+--
+-- Name: TABLE mecanico; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT ON TABLE public.mecanico TO lojista;
+
+
+--
+-- Name: COLUMN mecanico.nome; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT UPDATE(nome) ON TABLE public.mecanico TO mecanico;
+
+
+--
+-- Name: COLUMN mecanico.telefone; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT UPDATE(telefone) ON TABLE public.mecanico TO mecanico;
+
+
+--
+-- Name: COLUMN mecanico.especialidade; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT UPDATE(especialidade) ON TABLE public.mecanico TO mecanico;
+
+
+--
+-- Name: COLUMN mecanico.endereco; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT UPDATE(endereco) ON TABLE public.mecanico TO mecanico;
+
+
+--
+-- Name: COLUMN mecanico.latitude; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT UPDATE(latitude) ON TABLE public.mecanico TO mecanico;
+
+
+--
+-- Name: COLUMN mecanico.longitude; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT UPDATE(longitude) ON TABLE public.mecanico TO mecanico;
+
+
+--
+-- Name: TABLE peca; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT ON TABLE public.peca TO mecanico;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.peca TO estoque;
+
+
+--
+-- Name: TABLE pedido; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT ON TABLE public.pedido TO usuario;
+GRANT SELECT,INSERT ON TABLE public.pedido TO lojista;
+
+
+--
+-- Name: TABLE servico; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT ON TABLE public.servico TO usuario;
+GRANT SELECT,INSERT ON TABLE public.servico TO mecanico;
+
+
+--
+-- Name: COLUMN servico.descricao; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT UPDATE(descricao) ON TABLE public.servico TO mecanico;
+
+
+--
+-- Name: COLUMN servico.data_servico; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT UPDATE(data_servico) ON TABLE public.servico TO mecanico;
+
+
+--
+-- Name: COLUMN servico.valor_servico; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT UPDATE(valor_servico) ON TABLE public.servico TO mecanico;
+
+
+--
+-- Name: TABLE usuario; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,UPDATE ON TABLE public.usuario TO lojista;
+
+
+--
+-- Name: COLUMN usuario.nome; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT(nome),UPDATE(nome) ON TABLE public.usuario TO usuario;
+
+
+--
+-- Name: COLUMN usuario.email; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT(email),UPDATE(email) ON TABLE public.usuario TO usuario;
+
+
+--
+-- Name: COLUMN usuario.senha; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT(senha),UPDATE(senha) ON TABLE public.usuario TO usuario;
+
+
+--
+-- Name: COLUMN usuario.telefone; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT(telefone),UPDATE(telefone) ON TABLE public.usuario TO usuario;
+
+
+--
+-- Name: COLUMN usuario.latitude; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT(latitude),UPDATE(latitude) ON TABLE public.usuario TO usuario;
+
+
+--
+-- Name: COLUMN usuario.longitude; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT(longitude),UPDATE(longitude) ON TABLE public.usuario TO usuario;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict grjmoVgEVCsymeBucKgjdqAfYTYtHtrxJefhVgkCCifaMARcuOSdSb7PRg6agje
+
